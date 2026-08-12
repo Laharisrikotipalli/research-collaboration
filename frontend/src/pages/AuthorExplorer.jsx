@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../services/api";
 import { Loading, EmptyState, ErrorState } from "../components/StateViews";
 
 export default function AuthorExplorer() {
-  const [query, setQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState(null);
   const [selected, setSelected] = useState(null);
   const [network, setNetwork] = useState(null);
@@ -11,19 +14,28 @@ export default function AuthorExplorer() {
   const [status, setStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  async function handleSearch(e) {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runSearch(term) {
+    if (!term.trim()) return;
     setStatus("loading");
     setSelected(null);
     try {
-      const rows = await api.searchAuthors(query.trim());
+      const rows = await api.searchAuthors(term.trim());
       setResults(rows);
       setStatus("idle");
     } catch (err) {
       setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
       setStatus("error");
     }
+  }
+
+  useEffect(() => {
+    if (initialQuery) runSearch(initialQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    await runSearch(query);
   }
 
   async function selectAuthor(author) {

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db import verify_connectivity, close_driver
-from app.routes import authors, papers, topics, graph
+from app.routes import authors, papers, topics, graph, stats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("main")
@@ -23,6 +23,7 @@ app.include_router(authors.router)
 app.include_router(papers.router)
 app.include_router(topics.router)
 app.include_router(graph.router)
+app.include_router(stats.router)
 
 
 @app.on_event("startup")

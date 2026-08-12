@@ -39,6 +39,8 @@ export const api = {
   getCitations: (id) => request(`/api/papers/${encodeURIComponent(id)}/citations`),
   getCitationNeighborhood: (id) => request(`/api/papers/${encodeURIComponent(id)}/neighborhood`),
 
+  getStats: () => request(`/api/stats`),
+
   listTopics: () => request(`/api/topics`),
   getTopic: (id) => request(`/api/topics/${encodeURIComponent(id)}`),
 
