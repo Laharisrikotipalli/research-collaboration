@@ -3,7 +3,11 @@
 LIST_TOPICS = """
 MATCH (t:Topic)
 OPTIONAL MATCH (t)<-[:ABOUT]-(p:Paper)
-RETURN t.id AS id, t.name AS name, count(p) AS paper_count
+WITH t, collect(DISTINCT p) AS papers
+OPTIONAL MATCH (t)<-[:ABOUT]-(:Paper)<-[:AUTHORED]-(a:Author)
+WITH t, papers, collect(DISTINCT a) AS researchers
+RETURN t.id AS id, t.name AS name,
+       size(papers) AS paper_count, size(researchers) AS researcher_count
 ORDER BY paper_count DESC
 """
 

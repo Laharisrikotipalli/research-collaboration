@@ -107,31 +107,16 @@ def gen_papers(topics):
 
 def gen_authorships(authors, papers):
     """Each paper gets 1-4 authors; authors skew toward a handful of frequent topics
-    (via co-authorship clustering) so co-author and collaboration-path queries are meaningful.
-
-    Clusters are chained together with "bridge" authors who belong to two
-    adjacent clusters. Without this, clusters are fully disjoint and most
-    author pairs across the dataset have literally no collaboration path at
-    all, which makes the Collaboration Path feature look broken even though
-    the query itself is correct - there's simply nothing connecting them."""
+    (via co-authorship clustering) so co-author and collaboration-path queries are meaningful."""
     authorships = []
+    # Give every author a "home cluster" of a few peers they tend to publish with.
+    clusters = []
     remaining = authors[:]
     random.shuffle(remaining)
-
-    base_clusters = []
     while remaining:
         size = min(len(remaining), random.randint(3, 6))
-        base_clusters.append(remaining[:size])
+        clusters.append(remaining[:size])
         remaining = remaining[size:]
-
-    # Chain clusters: each cluster (after the first) borrows one member from
-    # the previous cluster, so there's always a path from any cluster to any
-    # other by hopping through these shared bridge authors.
-    clusters = [list(base_clusters[0])]
-    for i in range(1, len(base_clusters)):
-        bridge_author = random.choice(clusters[i - 1])
-        new_cluster = list(base_clusters[i]) + [bridge_author]
-        clusters.append(new_cluster)
 
     for paper in papers:
         cluster = random.choice(clusters)

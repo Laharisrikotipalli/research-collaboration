@@ -6,10 +6,19 @@ from app.queries import authors as q
 router = APIRouter(prefix="/api/authors", tags=["authors"])
 
 
+@router.get("/featured")
+def featured_authors():
+    """Default researcher list for the Authors page on initial load (no search term)."""
+    try:
+        return run_query(q.FEATURED_AUTHORS)
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code=503, detail="Database unavailable. Please try again shortly.")
+
+
 @router.get("")
 def search_authors(name: str = Query(..., min_length=1)):
     try:
-        return run_query(q.SEARCH_AUTHORS, {"name": name})
+        return run_query(q.SEARCH_AUTHORS_WITH_STATS, {"name": name})
     except DatabaseUnavailableError:
         raise HTTPException(status_code=503, detail="Database unavailable. Please try again shortly.")
 

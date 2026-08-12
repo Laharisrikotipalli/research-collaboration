@@ -8,6 +8,40 @@ ORDER BY p.citation_count DESC
 LIMIT 20
 """
 
+# Shared shape for the Papers page cards: title/year/citations plus the
+# authors and topics needed to render the card without a second round trip.
+_PAPER_CARD_TAIL = """
+OPTIONAL MATCH (a:Author)-[:AUTHORED]->(p)
+WITH p, collect(DISTINCT {id: a.id, name: a.name}) AS authors
+OPTIONAL MATCH (p)-[:ABOUT]->(t:Topic)
+WITH p, authors, collect(DISTINCT {id: t.id, name: t.name}) AS topics
+RETURN p.id AS id, p.title AS title, p.year AS year, p.citation_count AS citation_count,
+       authors, topics
+"""
+
+# Default "Featured Research" list for the Papers page on initial load —
+# no search term needed, ranked by citation count.
+FEATURED_PAPERS = (
+    """
+MATCH (p:Paper)
+WITH p ORDER BY p.citation_count DESC LIMIT 9
+"""
+    + _PAPER_CARD_TAIL
+    + "\nORDER BY p.citation_count DESC\n"
+)
+
+# Same card shape, filtered by title — used so search results render with
+# the same authors/topics cards as the featured/default list.
+SEARCH_PAPERS_WITH_CARDS = (
+    """
+MATCH (p:Paper)
+WHERE toLower(p.title) CONTAINS toLower($title)
+WITH p ORDER BY p.citation_count DESC LIMIT 20
+"""
+    + _PAPER_CARD_TAIL
+    + "\nORDER BY p.citation_count DESC\n"
+)
+
 GET_PAPER = """
 MATCH (p:Paper {id: $paper_id})
 OPTIONAL MATCH (a:Author)-[:AUTHORED]->(p)

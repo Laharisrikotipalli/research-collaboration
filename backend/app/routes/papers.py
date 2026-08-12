@@ -6,10 +6,19 @@ from app.queries import papers as q
 router = APIRouter(prefix="/api/papers", tags=["papers"])
 
 
+@router.get("/featured")
+def featured_papers():
+    """Default paper list for the Papers page on initial load (no search term)."""
+    try:
+        return run_query(q.FEATURED_PAPERS)
+    except DatabaseUnavailableError:
+        raise HTTPException(status_code=503, detail="Database unavailable. Please try again shortly.")
+
+
 @router.get("")
 def search_papers(title: str = Query(..., min_length=1)):
     try:
-        return run_query(q.SEARCH_PAPERS, {"title": title})
+        return run_query(q.SEARCH_PAPERS_WITH_CARDS, {"title": title})
     except DatabaseUnavailableError:
         raise HTTPException(status_code=503, detail="Database unavailable. Please try again shortly.")
 
