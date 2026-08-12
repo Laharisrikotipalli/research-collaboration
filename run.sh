@@ -43,7 +43,14 @@ trap cleanup EXIT INT TERM
 echo "Starting backend on http://localhost:8000 ..."
 (
   cd "$ROOT_DIR/backend"
-  source .venv/bin/activate
+  if [ -f .venv/bin/activate ]; then
+    source .venv/bin/activate
+  elif [ -f .venv/Scripts/activate ]; then
+    source .venv/Scripts/activate
+  else
+    echo "Could not find a virtualenv activate script in backend/.venv"
+    exit 1
+  fi
   uvicorn app.main:app --reload --port 8000
 ) &
 BACKEND_PID=$!

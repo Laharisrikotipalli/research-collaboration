@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { NetworkGraphic } from "../components/Illustrations";
+import homeHeroIllustration from "../assets/home-hero-illustration.png";
 
 const FEATURES = [
   {
@@ -57,7 +57,12 @@ export default function Home() {
           </div>
         </div>
         <div className="flex justify-center">
-          <NetworkGraphic className="w-full max-w-sm" />
+          <img
+            src={homeHeroIllustration}
+            alt=""
+            className="w-full max-w-sm md:max-w-md"
+            aria-hidden="true"
+          />
         </div>
       </section>
 

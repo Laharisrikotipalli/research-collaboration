@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../services/api";
 import { EmptyState, ErrorState, SkeletonGrid } from "../components/StateViews";
+import topicIllustration from "../assets/topic-illustration.png";
 
 function TopicCard({ topic }) {
   return (
@@ -50,16 +51,24 @@ export default function TopicExplorer() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h2 className="font-serif text-2xl font-semibold text-ink">Research Topics</h2>
-        <p className="text-sm text-inkMuted mt-1 mb-5">
-          Explore research areas and discover researchers working in them.
-        </p>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search topics…"
-          className="w-full max-w-xl rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
+      <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold text-ink">Research Topics</h2>
+          <p className="text-sm text-inkMuted mt-1 mb-5">
+            Explore research areas and discover researchers working in them.
+          </p>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search topics…"
+            className="w-full max-w-xl rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
+          />
+        </div>
+        <img
+          src={topicIllustration}
+          alt=""
+          className="hidden md:block w-40 opacity-90"
+          aria-hidden="true"
         />
       </div>
 

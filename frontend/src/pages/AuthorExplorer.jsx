@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../services/api";
 import { EmptyState, ErrorState, SkeletonGrid } from "../components/StateViews";
+import authorIllustration from "../assets/author-illustration.png";
 
 function ResearcherCard({ author }) {
   return (
@@ -78,25 +79,33 @@ export default function AuthorExplorer() {
 
   return (
     <div className="space-y-10">
-      <div>
-        <h2 className="font-serif text-2xl font-semibold text-ink">Authors</h2>
-        <p className="text-sm text-inkMuted mt-1 mb-5">
-          Discover researchers, their publications, expertise and collaboration networks.
-        </p>
-        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search researchers by name…"
-            className="flex-1 rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
-          />
-          <button
-            type="submit"
-            className="rounded-full bg-gold-500 text-navy-950 text-sm font-semibold px-5 py-2.5 hover:bg-gold-400 transition"
-          >
-            Search
-          </button>
-        </form>
+      <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold text-ink">Authors</h2>
+          <p className="text-sm text-inkMuted mt-1 mb-5">
+            Discover researchers, their publications, expertise and collaboration networks.
+          </p>
+          <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search researchers by name…"
+              className="flex-1 rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
+            />
+            <button
+              type="submit"
+              className="rounded-full bg-gold-500 text-navy-950 text-sm font-semibold px-5 py-2.5 hover:bg-gold-400 transition"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+        <img
+          src={authorIllustration}
+          alt=""
+          className="hidden md:block w-48 opacity-90"
+          aria-hidden="true"
+        />
       </div>
 
       {isSearching ? (

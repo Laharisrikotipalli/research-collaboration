@@ -14,8 +14,24 @@ export default function Layout() {
       <header className="border-b border-white/10 bg-navy-950/80 backdrop-blur sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <NavLink to="/" className="flex items-center gap-3">
-            <span className="h-8 w-8 rounded-lg bg-gold-500/15 border border-gold-500/30 flex items-center justify-center text-gold-400 font-serif font-semibold">
-              R
+            <span className="h-8 w-8 rounded-lg bg-gold-500/15 border border-gold-500/30 flex items-center justify-center text-gold-400">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4.5 w-4.5"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <line x1="6" y1="6" x2="18" y2="8" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" />
+                <line x1="6" y1="6" x2="9" y2="18" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" />
+                <line x1="18" y1="8" x2="9" y2="18" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" />
+                <line x1="18" y1="8" x2="17" y2="17" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" />
+                <line x1="9" y1="18" x2="17" y2="17" stroke="currentColor" strokeOpacity="0.6" strokeWidth="1.2" />
+                <circle cx="6" cy="6" r="2.2" fill="currentColor" />
+                <circle cx="18" cy="8" r="2.6" fill="currentColor" fillOpacity="0.75" />
+                <circle cx="9" cy="18" r="2" fill="currentColor" fillOpacity="0.85" />
+                <circle cx="17" cy="17" r="1.8" fill="currentColor" fillOpacity="0.6" />
+              </svg>
             </span>
             <div>
               <h1 className="font-serif text-lg font-semibold tracking-tight text-ink">
