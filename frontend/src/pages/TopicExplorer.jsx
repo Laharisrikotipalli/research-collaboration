@@ -1,15 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, ApiError } from "../services/api";
-import { Loading, EmptyState, ErrorState } from "../components/StateViews";
+import { EmptyState, ErrorState, SkeletonGrid } from "../components/StateViews";
+
+function TopicCard({ topic }) {
+  return (
+    <Link
+      to={`/topics/${encodeURIComponent(topic.id)}`}
+      className="group rounded-xl border border-white/10 bg-navy-800/60 p-5 shadow-card hover:border-gold-500/40 hover:-translate-y-0.5 transition flex flex-col"
+    >
+      <h3 className="font-serif font-semibold text-ink">{topic.name}</h3>
+      <p className="text-xs text-inkMuted mt-3">{topic.paper_count} Papers</p>
+      <p className="text-xs text-inkMuted mt-0.5">{topic.researcher_count} Researchers</p>
+      <span className="text-xs text-gold-400 font-medium mt-4 group-hover:translate-x-0.5 transition">
+        Explore Topic →
+      </span>
+    </Link>
+  );
+}
 
 export default function TopicExplorer() {
   const [topics, setTopics] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [detail, setDetail] = useState(null);
   const [status, setStatus] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [query, setQuery] = useState("");
 
-  useEffect(() => {
+  function load() {
+    setStatus("loading");
     api
       .listTopics()
       .then((rows) => {
@@ -20,132 +37,62 @@ export default function TopicExplorer() {
         setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
         setStatus("error");
       });
-  }, []);
-
-  async function selectTopic(topic) {
-    setSelected(topic);
-    setDetail(null);
-    setStatus("loading");
-    try {
-      const d = await api.getTopic(topic.id);
-      setDetail(d);
-      setStatus("idle");
-    } catch (err) {
-      setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
-      setStatus("error");
-    }
   }
 
-  if (status === "loading" && !topics) return <Loading label="Loading topics…" />;
-  if (status === "error" && !selected) return <ErrorState message={errorMsg} />;
+  useEffect(load, []);
+
+  const filtered = useMemo(() => {
+    if (!topics) return null;
+    const q = query.trim().toLowerCase();
+    if (!q) return topics;
+    return topics.filter((t) => t.name.toLowerCase().includes(q));
+  }, [topics, query]);
 
   return (
-    <div className="space-y-9">
+    <div className="space-y-10">
       <div>
-        <h2 className="font-display text-xl font-medium mb-1.5">Browse by topic</h2>
-        <p className="text-sm text-muted mb-6">
-          Every topic in the dataset, ranked by how many papers cover it.
+        <h2 className="font-serif text-2xl font-semibold text-ink">Research Topics</h2>
+        <p className="text-sm text-inkMuted mt-1 mb-5">
+          Explore research areas and discover researchers working in them.
         </p>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search topics…"
+          className="w-full max-w-xl rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
+        />
       </div>
 
-      {!selected && topics && topics.length === 0 && <EmptyState title="No topics found" />}
-
-      {!selected && topics && topics.length > 0 && (
-        <ul className="grid sm:grid-cols-2 gap-3">
-          {topics.map((t) => (
-            <li key={t.id}>
-              <button
-                onClick={() => selectTopic(t)}
-                className="w-full text-left rounded-xl border border-gold/15 bg-panel p-4 hover:border-gold/40 hover:bg-panel2 transition flex justify-between items-center"
-              >
-                <span className="font-medium">{t.name}</span>
-                <span className="text-xs text-gold font-mono">{t.paper_count} papers</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {selected && (
-        <div className="space-y-7">
-          <button onClick={() => setSelected(null)} className="text-xs font-mono text-gold hover:text-goldBright">
-            ← Back to topics
-          </button>
-
-          <h3 className="font-display text-lg font-medium">{selected.name}</h3>
-
-          {status === "loading" && <Loading label="Loading topic details…" />}
-          {status === "error" && <ErrorState message={errorMsg} />}
-
-          {detail && (
-            <div className="grid md:grid-cols-2 gap-7">
-              <section>
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                  Papers ({detail.papers.length})
-                </h4>
-                {detail.papers.length === 0 ? (
-                  <EmptyState title="No papers under this topic" />
-                ) : (
-                  <ul className="space-y-2">
-                    {detail.papers.map((p) => (
-                      <li key={p.id} className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm">
-                        <p className="font-medium">{p.title}</p>
-                        <p className="text-muted text-xs mt-1 font-mono">
-                          {p.year} · {p.citation_count} citations
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <section>
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                  Active authors ({detail.authors.length})
-                </h4>
-                {detail.authors.length === 0 ? (
-                  <EmptyState title="No authors found" />
-                ) : (
-                  <ul className="space-y-2">
-                    {detail.authors.slice(0, 10).map((a) => (
-                      <li
-                        key={a.id}
-                        className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm flex justify-between"
-                      >
-                        <div>
-                          <p className="font-medium">{a.name}</p>
-                          <p className="text-muted text-xs">{a.institution}</p>
-                        </div>
-                        <span className="text-xs text-gold font-mono self-center">
-                          {a.papers_in_topic} papers
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <section className="md:col-span-2">
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">Related topics</h4>
-                {detail.related_topics.length === 0 ? (
-                  <EmptyState title="No related topics found" />
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {detail.related_topics.map((t) => (
-                      <span
-                        key={t.id}
-                        className="text-xs bg-teal/10 border border-teal/25 text-teal px-3 py-1.5 rounded-full font-mono"
-                      >
-                        {t.name} · {t.shared_papers} shared
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </section>
-            </div>
-          )}
-        </div>
-      )}
+      <section>
+        <h3 className="text-xs font-semibold text-inkMuted uppercase tracking-widest mb-4">
+          Research Areas
+        </h3>
+        {status === "loading" && <SkeletonGrid count={9} />}
+        {status === "error" && <ErrorState message={errorMsg} onRetry={load} />}
+        {status === "idle" && filtered && filtered.length === 0 && (
+          <EmptyState
+            title="No topics found"
+            hint="Try a different search term."
+            action={
+              query ? (
+                <button
+                  onClick={() => setQuery("")}
+                  className="text-sm px-4 py-1.5 rounded-full border border-white/15 text-ink hover:bg-white/5 transition"
+                >
+                  Clear Search
+                </button>
+              ) : null
+            }
+          />
+        )}
+        {status === "idle" && filtered && filtered.length > 0 && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((t) => (
+              <TopicCard key={t.id} topic={t} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

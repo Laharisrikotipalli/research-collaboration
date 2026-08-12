@@ -1,210 +1,157 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api, ApiError } from "../services/api";
-import { Loading, EmptyState, ErrorState } from "../components/StateViews";
+import { EmptyState, ErrorState, SkeletonGrid } from "../components/StateViews";
+
+function ResearcherCard({ author }) {
+  return (
+    <Link
+      to={`/authors/${encodeURIComponent(author.id)}`}
+      className="group rounded-xl border border-white/10 bg-navy-800/60 p-5 shadow-card hover:border-gold-500/40 hover:-translate-y-0.5 transition flex flex-col"
+    >
+      <h3 className="font-serif font-semibold text-ink">{author.name}</h3>
+      <p className="text-sm text-inkMuted mt-0.5">{author.institution}</p>
+
+      <p className="text-xs text-gold-400 font-medium mt-3">h-index {author.h_index}</p>
+      <p className="text-xs text-inkMuted mt-1">
+        {author.papers_count} Papers · {author.co_authors_count} Co-authors ·{" "}
+        {author.topics_count} Topics
+      </p>
+
+      <span className="text-xs text-gold-400 font-medium mt-4 group-hover:translate-x-0.5 transition">
+        View Researcher →
+      </span>
+    </Link>
+  );
+}
 
 export default function AuthorExplorer() {
-  const [searchParams] = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
-  const [query, setQuery] = useState(initialQuery);
+  const [featured, setFeatured] = useState(null);
+  const [featuredStatus, setFeaturedStatus] = useState("loading");
+
+  const [query, setQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
   const [results, setResults] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [network, setNetwork] = useState(null);
-  const [potential, setPotential] = useState(null);
-  const [status, setStatus] = useState("idle");
+  const [searchStatus, setSearchStatus] = useState("idle"); // idle | loading | error
   const [errorMsg, setErrorMsg] = useState("");
 
-  async function runSearch(term) {
-    if (!term.trim()) return;
-    setStatus("loading");
-    setSelected(null);
-    try {
-      const rows = await api.searchAuthors(term.trim());
-      setResults(rows);
-      setStatus("idle");
-    } catch (err) {
-      setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
-      setStatus("error");
-    }
+  function loadFeatured() {
+    setFeaturedStatus("loading");
+    api
+      .featuredAuthors()
+      .then((rows) => {
+        setFeatured(rows);
+        setFeaturedStatus("idle");
+      })
+      .catch((err) => {
+        setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
+        setFeaturedStatus("error");
+      });
   }
 
-  useEffect(() => {
-    if (initialQuery) runSearch(initialQuery);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(loadFeatured, []);
 
   async function handleSearch(e) {
     e.preventDefault();
-    await runSearch(query);
-  }
-
-  async function selectAuthor(author) {
-    setSelected(author);
-    setNetwork(null);
-    setPotential(null);
-    setStatus("loading");
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setActiveQuery(trimmed);
+    setSearchStatus("loading");
     try {
-      const [net, pot] = await Promise.all([
-        api.getAuthorNetwork(author.id),
-        api.getPotentialCollaborators(author.id),
-      ]);
-      setNetwork(net);
-      setPotential(pot);
-      setStatus("idle");
+      const rows = await api.searchAuthors(trimmed);
+      setResults(rows);
+      setSearchStatus("idle");
     } catch (err) {
       setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
-      setStatus("error");
+      setSearchStatus("error");
     }
   }
 
+  function clearSearch() {
+    setQuery("");
+    setActiveQuery("");
+    setResults(null);
+    setSearchStatus("idle");
+  }
+
+  const isSearching = activeQuery !== "";
+
   return (
-    <div className="space-y-9">
+    <div className="space-y-10">
       <div>
-        <h2 className="font-display text-xl font-medium mb-1.5">Find a researcher</h2>
-        <p className="text-sm text-muted mb-6">
-          Search by name to explore their papers, co-authors, and research topics.
+        <h2 className="font-serif text-2xl font-semibold text-ink">Authors</h2>
+        <p className="text-sm text-inkMuted mt-1 mb-5">
+          Discover researchers, their publications, expertise and collaboration networks.
         </p>
-        <form onSubmit={handleSearch} className="flex gap-2">
+        <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. Priya Sharma"
-            className="flex-1 rounded-full border border-gold/20 bg-panel px-4 py-2.5 text-sm text-ivory placeholder:text-muted outline-none focus:border-gold focus:ring-1 focus:ring-gold/40"
+            placeholder="Search researchers by name…"
+            className="flex-1 rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
           />
           <button
             type="submit"
-            className="font-mono text-xs uppercase tracking-wide rounded-full bg-gold text-bg font-medium px-6 py-2.5 hover:bg-goldBright transition"
+            className="rounded-full bg-gold-500 text-navy-950 text-sm font-semibold px-5 py-2.5 hover:bg-gold-400 transition"
           >
             Search
           </button>
         </form>
       </div>
 
-      {status === "loading" && !selected && <Loading label="Searching authors…" />}
-      {status === "error" && <ErrorState message={errorMsg} onRetry={() => setStatus("idle")} />}
-
-      {results && results.length === 0 && !selected && (
-        <EmptyState title="No authors found" hint="Try a different name or partial spelling." />
-      )}
-
-      {results && results.length > 0 && !selected && (
-        <ul className="grid sm:grid-cols-2 gap-3">
-          {results.map((a) => (
-            <li key={a.id}>
-              <button
-                onClick={() => selectAuthor(a)}
-                className="w-full text-left rounded-xl border border-gold/15 bg-panel p-4 hover:border-gold/40 hover:bg-panel2 transition"
-              >
-                <p className="font-display font-medium">{a.name}</p>
-                <p className="text-xs text-muted mt-0.5">{a.institution}</p>
-                <p className="text-xs text-gold font-mono mt-1.5">h-index {a.h_index}</p>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {selected && (
-        <div className="space-y-7">
-          <button onClick={() => setSelected(null)} className="text-xs font-mono text-gold hover:text-goldBright">
-            ← Back to results
-          </button>
-
-          <div className="rounded-xl border border-gold/15 bg-panel p-6 flex items-start gap-3">
-            <span className="text-goldBright text-xl leading-none mt-0.5">✦</span>
-            <div>
-              <h3 className="font-display text-lg font-medium">{selected.name}</h3>
-              <p className="text-sm text-muted">
-                {selected.institution} · h-index {selected.h_index}
-              </p>
-            </div>
+      {isSearching ? (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-semibold text-inkMuted uppercase tracking-widest">
+              Search results for “{activeQuery}”
+            </h3>
+            <button onClick={clearSearch} className="text-xs text-gold-400 hover:underline">
+              Clear Search
+            </button>
           </div>
 
-          {status === "loading" && <Loading label="Loading network…" />}
-
-          {network && (
-            <div className="grid md:grid-cols-2 gap-7">
-              <section>
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                  Papers ({network.papers.length})
-                </h4>
-                {network.papers.length === 0 ? (
-                  <EmptyState title="No papers found" />
-                ) : (
-                  <ul className="space-y-2">
-                    {network.papers.map((p) => (
-                      <li key={p.id} className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm">
-                        <p className="font-medium">{p.title}</p>
-                        <p className="text-muted text-xs mt-1 font-mono">
-                          {p.year} · {p.citation_count} citations
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <section>
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                  Co-authors ({network.co_authors.length})
-                </h4>
-                {network.co_authors.length === 0 ? (
-                  <EmptyState title="No co-authors yet" />
-                ) : (
-                  <ul className="space-y-2">
-                    {network.co_authors.map((c) => (
-                      <li
-                        key={c.id}
-                        className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm flex justify-between"
-                      >
-                        <div>
-                          <p className="font-medium">{c.name}</p>
-                          <p className="text-muted text-xs">{c.institution}</p>
-                        </div>
-                        <span className="text-xs text-gold font-mono self-center">
-                          {c.shared_papers} shared
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
-              <section className="md:col-span-2">
-                <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">Research topics</h4>
-                <div className="flex flex-wrap gap-2">
-                  {network.topics.map((t) => (
-                    <span
-                      key={t.id}
-                      className="text-xs bg-teal/10 border border-teal/25 text-teal px-3 py-1.5 rounded-full font-mono"
-                    >
-                      {t.name}
-                    </span>
-                  ))}
-                </div>
-              </section>
-
-              {potential && potential.length > 0 && (
-                <section className="md:col-span-2">
-                  <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-1">
-                    Potential collaborators
-                  </h4>
-                  <p className="text-xs text-muted mb-3">
-                    Same research topics, never co-authored — a graph-native discovery query.
-                  </p>
-                  <ul className="grid sm:grid-cols-2 gap-2">
-                    {potential.slice(0, 6).map((p) => (
-                      <li key={p.id} className="rounded-lg border border-dashed border-gold/25 p-3.5 text-sm">
-                        <p className="font-medium">{p.name}</p>
-                        <p className="text-muted text-xs">{p.shared_topics.join(", ")}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+          {searchStatus === "loading" && <SkeletonGrid count={6} />}
+          {searchStatus === "error" && <ErrorState message={errorMsg} onRetry={handleSearch} />}
+          {searchStatus === "idle" && results && results.length === 0 && (
+            <EmptyState
+              title="No researchers found"
+              hint="Try searching for another researcher name."
+              action={
+                <button
+                  onClick={clearSearch}
+                  className="text-sm px-4 py-1.5 rounded-full border border-white/15 text-ink hover:bg-white/5 transition"
+                >
+                  Clear Search
+                </button>
+              }
+            />
+          )}
+          {searchStatus === "idle" && results && results.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {results.map((a) => (
+                <ResearcherCard key={a.id} author={a} />
+              ))}
             </div>
           )}
-        </div>
+        </section>
+      ) : (
+        <section>
+          <h3 className="text-xs font-semibold text-inkMuted uppercase tracking-widest mb-4">
+            Featured Researchers
+          </h3>
+          {featuredStatus === "loading" && <SkeletonGrid count={9} />}
+          {featuredStatus === "error" && <ErrorState message={errorMsg} onRetry={loadFeatured} />}
+          {featuredStatus === "idle" && featured && featured.length === 0 && (
+            <EmptyState title="No researchers yet" hint="The research graph is empty." />
+          )}
+          {featuredStatus === "idle" && featured && featured.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {featured.map((a) => (
+                <ResearcherCard key={a.id} author={a} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

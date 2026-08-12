@@ -4,43 +4,40 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "#10142A",
-        panel: "#181D3B",
-        panel2: "#1E2447",
-        ivory: "#F3EFE4",
-        muted: "#8892B8",
-        gold: "#C9A227",
-        goldBright: "#E8C158",
-        rust: "#C1443B",
-        teal: "#6FBDB4",
+        // Base surfaces — dark navy
+        navy: {
+          950: "#070b16",
+          900: "#0b1120",
+          800: "#111a2e",
+          700: "#182440",
+          600: "#22315294",
+        },
+        // Gold accent
+        gold: {
+          400: "#f2c96d",
+          500: "#e8b84b",
+          600: "#c99a2e",
+          soft: "#3a3320",
+        },
+        // Blue/teal graph accents
+        teal: {
+          400: "#5eead4",
+          500: "#2dd4bf",
+        },
+        // Text
+        ink: "#eef1f8",
+        inkMuted: "#93a0bd",
+        // Legacy aliases kept so nothing else silently breaks
+        paper: "#0b1120",
+        accent: "#e8b84b",
+        accentSoft: "#22315240",
       },
       fontFamily: {
-        display: ["Fraunces", "serif"],
-        sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
-        mono: ["IBM Plex Mono", "monospace"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Source Serif Pro", "Georgia", "serif"],
       },
-      keyframes: {
-        twinkle: {
-          "0%, 100%": { opacity: 1 },
-          "50%": { opacity: 0.55 },
-        },
-        draw: {
-          to: { strokeDashoffset: 0 },
-        },
-        softPulse: {
-          "0%, 100%": { opacity: 0.35 },
-          "50%": { opacity: 1 },
-        },
-        fadeUp: {
-          from: { opacity: 0, transform: "translateY(6px)" },
-          to: { opacity: 1, transform: "translateY(0)" },
-        },
-      },
-      animation: {
-        twinkle: "twinkle 3.2s ease-in-out infinite",
-        draw: "draw 0.7s ease forwards",
-        softPulse: "softPulse 1.1s ease-in-out infinite",
-        fadeUp: "fadeUp 0.35s ease backwards",
+      boxShadow: {
+        card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 24px -8px rgba(0,0,0,0.6)",
       },
     },
   },

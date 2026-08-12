@@ -1,203 +1,175 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, ApiError } from "../services/api";
-import { Loading, EmptyState, ErrorState } from "../components/StateViews";
+import { EmptyState, ErrorState, SkeletonGrid } from "../components/StateViews";
+import { PapersGraphic } from "../components/Illustrations";
+
+function PaperCard({ paper }) {
+  const authors = (paper.authors || []).filter((a) => a.id);
+  const topics = (paper.topics || []).filter((t) => t.id);
+  return (
+    <Link
+      to={`/papers/${encodeURIComponent(paper.id)}`}
+      className="group rounded-xl border border-white/10 bg-navy-800/60 p-5 shadow-card hover:border-gold-500/40 hover:-translate-y-0.5 transition flex flex-col"
+    >
+      <h3 className="font-serif font-semibold text-ink leading-snug">{paper.title}</h3>
+      <p className="text-xs text-inkMuted mt-2">
+        {paper.year} · {paper.citation_count} citations
+      </p>
+      {authors.length > 0 && (
+        <p className="text-xs text-inkMuted mt-2">
+          {authors.map((a) => a.name).join(" · ")}
+        </p>
+      )}
+      {topics.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {topics.slice(0, 3).map((t) => (
+            <span
+              key={t.id}
+              className="text-[11px] bg-gold-soft text-gold-400 border border-gold-500/20 px-2.5 py-0.5 rounded-full font-medium"
+            >
+              {t.name}
+            </span>
+          ))}
+        </div>
+      )}
+      <span className="text-xs text-gold-400 font-medium mt-4 group-hover:translate-x-0.5 transition">
+        Explore Paper →
+      </span>
+    </Link>
+  );
+}
 
 export default function PaperExplorer() {
+  const [featured, setFeatured] = useState(null);
+  const [featuredStatus, setFeaturedStatus] = useState("loading");
+
   const [query, setQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
   const [results, setResults] = useState(null);
-  const [selected, setSelected] = useState(null);
-  const [detail, setDetail] = useState(null);
-  const [citations, setCitations] = useState(null);
-  const [neighborhood, setNeighborhood] = useState(null);
-  const [status, setStatus] = useState("idle");
+  const [searchStatus, setSearchStatus] = useState("idle");
   const [errorMsg, setErrorMsg] = useState("");
+
+  function loadFeatured() {
+    setFeaturedStatus("loading");
+    api
+      .featuredPapers()
+      .then((rows) => {
+        setFeatured(rows);
+        setFeaturedStatus("idle");
+      })
+      .catch((err) => {
+        setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
+        setFeaturedStatus("error");
+      });
+  }
+
+  useEffect(loadFeatured, []);
 
   async function handleSearch(e) {
     e.preventDefault();
-    if (!query.trim()) return;
-    setStatus("loading");
-    setSelected(null);
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    setActiveQuery(trimmed);
+    setSearchStatus("loading");
     try {
-      const rows = await api.searchPapers(query.trim());
+      const rows = await api.searchPapers(trimmed);
       setResults(rows);
-      setStatus("idle");
+      setSearchStatus("idle");
     } catch (err) {
       setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
-      setStatus("error");
+      setSearchStatus("error");
     }
   }
 
-  async function selectPaper(paper) {
-    setSelected(paper);
-    setDetail(null);
-    setCitations(null);
-    setNeighborhood(null);
-    setStatus("loading");
-    try {
-      const [d, c, n] = await Promise.all([
-        api.getPaper(paper.id),
-        api.getCitations(paper.id),
-        api.getCitationNeighborhood(paper.id),
-      ]);
-      setDetail(d);
-      setCitations(c);
-      setNeighborhood(n);
-      setStatus("idle");
-    } catch (err) {
-      setErrorMsg(err instanceof ApiError ? err.message : "Something went wrong.");
-      setStatus("error");
-    }
+  function clearSearch() {
+    setQuery("");
+    setActiveQuery("");
+    setResults(null);
+    setSearchStatus("idle");
   }
+
+  const isSearching = activeQuery !== "";
 
   return (
-    <div className="space-y-9">
-      <div>
-        <h2 className="font-display text-xl font-medium mb-1.5">Find a paper</h2>
-        <p className="text-sm text-muted mb-6">
-          Search by title to see its authors, topics, and citation network.
-        </p>
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. Knowledge Graphs"
-            className="flex-1 rounded-full border border-gold/20 bg-panel px-4 py-2.5 text-sm text-ivory placeholder:text-muted outline-none focus:border-gold focus:ring-1 focus:ring-gold/40"
-          />
-          <button
-            type="submit"
-            className="font-mono text-xs uppercase tracking-wide rounded-full bg-gold text-bg font-medium px-6 py-2.5 hover:bg-goldBright transition"
-          >
-            Search
-          </button>
-        </form>
+    <div className="space-y-10">
+      <div className="grid md:grid-cols-[1fr_auto] gap-8 items-center">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold text-ink">Research Papers</h2>
+          <p className="text-sm text-inkMuted mt-1 mb-5">
+            Explore publications, authors, topics and citation relationships.
+          </p>
+          <form onSubmit={handleSearch} className="flex gap-2 max-w-xl">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search papers by title…"
+              className="flex-1 rounded-full border border-white/15 bg-navy-800/60 text-ink placeholder:text-inkMuted px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold-500/40 focus:border-gold-500/40"
+            />
+            <button
+              type="submit"
+              className="rounded-full bg-gold-500 text-navy-950 text-sm font-semibold px-5 py-2.5 hover:bg-gold-400 transition"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+        <PapersGraphic className="hidden md:block w-48 opacity-90" />
       </div>
 
-      {status === "loading" && !selected && <Loading label="Searching papers…" />}
-      {status === "error" && <ErrorState message={errorMsg} onRetry={() => setStatus("idle")} />}
+      {isSearching ? (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-semibold text-inkMuted uppercase tracking-widest">
+              Search results for “{activeQuery}”
+            </h3>
+            <button onClick={clearSearch} className="text-xs text-gold-400 hover:underline">
+              Clear Search
+            </button>
+          </div>
 
-      {results && results.length === 0 && !selected && (
-        <EmptyState title="No papers found" hint="Try a broader search term." />
-      )}
-
-      {results && results.length > 0 && !selected && (
-        <ul className="space-y-2">
-          {results.map((p) => (
-            <li key={p.id}>
-              <button
-                onClick={() => selectPaper(p)}
-                className="w-full text-left rounded-xl border border-gold/15 bg-panel p-4 hover:border-gold/40 hover:bg-panel2 transition"
-              >
-                <p className="font-medium">{p.title}</p>
-                <p className="text-xs text-muted mt-1 font-mono">
-                  {p.year} · {p.citation_count} citations
-                </p>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {selected && (
-        <div className="space-y-7">
-          <button onClick={() => setSelected(null)} className="text-xs font-mono text-gold hover:text-goldBright">
-            ← Back to results
-          </button>
-
-          {status === "loading" && <Loading label="Loading paper details…" />}
-
-          {detail && (
-            <>
-              <div className="rounded-xl border border-gold/15 bg-panel p-6">
-                <div className="flex items-start gap-3">
-                  <span className="text-teal text-lg leading-none mt-0.5">◆</span>
-                  <div>
-                    <h3 className="font-display text-lg font-medium">{detail.title}</h3>
-                    <p className="text-sm text-muted mt-1 font-mono">
-                      {detail.year} · {detail.citation_count} citations
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-ivory/80 mt-4 leading-relaxed">{detail.abstract}</p>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {detail.authors.filter((a) => a.id).map((a) => (
-                    <span key={a.id} className="text-xs bg-panel2 border border-gold/15 px-3 py-1.5 rounded-full">
-                      {a.name}
-                    </span>
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {detail.topics.filter((t) => t.id).map((t) => (
-                    <span
-                      key={t.id}
-                      className="text-xs bg-teal/10 border border-teal/25 text-teal px-3 py-1.5 rounded-full font-mono"
-                    >
-                      {t.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {citations && (
-                <div className="grid md:grid-cols-2 gap-7">
-                  <section>
-                    <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                      Cites ({citations.cites.length})
-                    </h4>
-                    {citations.cites.length === 0 ? (
-                      <EmptyState title="Doesn't cite any papers in this dataset" />
-                    ) : (
-                      <ul className="space-y-2">
-                        {citations.cites.map((c) => (
-                          <li key={c.id} className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm">
-                            {c.title} <span className="text-muted font-mono">({c.year})</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
-                  <section>
-                    <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-3">
-                      Cited by ({citations.cited_by.length})
-                    </h4>
-                    {citations.cited_by.length === 0 ? (
-                      <EmptyState title="Not yet cited in this dataset" />
-                    ) : (
-                      <ul className="space-y-2">
-                        {citations.cited_by.map((c) => (
-                          <li key={c.id} className="rounded-lg border border-gold/10 bg-panel p-3.5 text-sm">
-                            {c.title} <span className="text-muted font-mono">({c.year})</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </section>
-                </div>
-              )}
-
-              {neighborhood && (
-                <section>
-                  <h4 className="font-mono text-xs uppercase tracking-wide text-muted mb-1">
-                    2-hop citation neighborhood
-                  </h4>
-                  <p className="text-xs text-muted mb-3">
-                    Chains of papers this one cites, and what those papers cite in turn.
-                  </p>
-                  {neighborhood.length === 0 ? (
-                    <EmptyState title="No neighborhood found within 2 hops" />
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {neighborhood.map((row, i) => (
-                        <li key={i} className="text-sm rounded-lg bg-panel border border-gold/10 p-3.5">
-                          {row.chain.map((n) => n.title).join("  →  ")}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              )}
-            </>
+          {searchStatus === "loading" && <SkeletonGrid count={6} />}
+          {searchStatus === "error" && <ErrorState message={errorMsg} onRetry={handleSearch} />}
+          {searchStatus === "idle" && results && results.length === 0 && (
+            <EmptyState
+              title="No papers found"
+              hint="Try a broader search term."
+              action={
+                <button
+                  onClick={clearSearch}
+                  className="text-sm px-4 py-1.5 rounded-full border border-white/15 text-ink hover:bg-white/5 transition"
+                >
+                  Clear Search
+                </button>
+              }
+            />
           )}
-        </div>
+          {searchStatus === "idle" && results && results.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {results.map((p) => (
+                <PaperCard key={p.id} paper={p} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : (
+        <section>
+          <h3 className="text-xs font-semibold text-inkMuted uppercase tracking-widest mb-4">
+            Featured Research
+          </h3>
+          {featuredStatus === "loading" && <SkeletonGrid count={9} />}
+          {featuredStatus === "error" && <ErrorState message={errorMsg} onRetry={loadFeatured} />}
+          {featuredStatus === "idle" && featured && featured.length === 0 && (
+            <EmptyState title="No papers yet" hint="The research graph is empty." />
+          )}
+          {featuredStatus === "idle" && featured && featured.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {featured.map((p) => (
+                <PaperCard key={p.id} paper={p} />
+              ))}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

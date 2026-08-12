@@ -28,18 +28,18 @@ async function request(path) {
 }
 
 export const api = {
+  featuredAuthors: () => request(`/api/authors/featured`),
   searchAuthors: (name) => request(`/api/authors?name=${encodeURIComponent(name)}`),
   getAuthor: (id) => request(`/api/authors/${encodeURIComponent(id)}`),
   getAuthorNetwork: (id) => request(`/api/authors/${encodeURIComponent(id)}/network`),
   getPotentialCollaborators: (id) =>
     request(`/api/authors/${encodeURIComponent(id)}/potential-collaborators`),
 
+  featuredPapers: () => request(`/api/papers/featured`),
   searchPapers: (title) => request(`/api/papers?title=${encodeURIComponent(title)}`),
   getPaper: (id) => request(`/api/papers/${encodeURIComponent(id)}`),
   getCitations: (id) => request(`/api/papers/${encodeURIComponent(id)}/citations`),
   getCitationNeighborhood: (id) => request(`/api/papers/${encodeURIComponent(id)}/neighborhood`),
-
-  getStats: () => request(`/api/stats`),
 
   listTopics: () => request(`/api/topics`),
   getTopic: (id) => request(`/api/topics/${encodeURIComponent(id)}`),

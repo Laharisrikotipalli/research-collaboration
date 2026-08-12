@@ -1,32 +1,53 @@
 export function Loading({ label = "Loading…" }) {
   return (
-    <div className="flex items-center gap-3 py-12 justify-center text-muted font-mono text-xs tracking-wide">
-      <span className="animate-softPulse">✦</span>
-      <span>{label}</span>
+    <div className="flex items-center gap-3 py-10 justify-center text-inkMuted">
+      <span className="h-4 w-4 rounded-full border-2 border-gold-500/30 border-t-gold-400 animate-spin" />
+      <span className="text-sm">{label}</span>
     </div>
   );
 }
 
-export function EmptyState({ title, hint }) {
+export function SkeletonCard() {
   return (
-    <div className="py-16 text-center border border-dashed border-gold/20 rounded-xl bg-panel/40">
-      <p className="text-gold/30 text-lg tracking-[0.5em] mb-4">✦ ✦ ✦</p>
-      <p className="text-ivory font-display font-medium">{title}</p>
-      {hint && <p className="text-muted text-sm mt-1.5 font-sans">{hint}</p>}
+    <div className="rounded-xl border border-white/10 bg-navy-800/60 p-5 animate-pulse space-y-3">
+      <div className="h-4 w-2/3 rounded bg-white/10" />
+      <div className="h-3 w-1/2 rounded bg-white/5" />
+      <div className="h-3 w-full rounded bg-white/5" />
+      <div className="h-3 w-3/4 rounded bg-white/5" />
+    </div>
+  );
+}
+
+export function SkeletonGrid({ count = 6 }) {
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  );
+}
+
+export function EmptyState({ title, hint, action }) {
+  return (
+    <div className="py-14 text-center border border-dashed border-white/15 rounded-xl bg-navy-800/30">
+      <p className="text-ink/90 font-medium">{title}</p>
+      {hint && <p className="text-inkMuted text-sm mt-1">{hint}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }
 
 export function ErrorState({ message, onRetry }) {
   return (
-    <div className="py-11 text-center border border-rust/30 bg-rust/10 rounded-xl">
-      <p className="text-rust font-medium font-sans text-sm">{message}</p>
+    <div className="py-10 text-center border border-red-400/20 bg-red-500/10 rounded-xl">
+      <p className="text-red-300 font-medium">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-4 text-xs font-mono uppercase tracking-wide px-4 py-2 rounded-full bg-rust text-ivory hover:bg-rust/85 transition"
+          className="mt-3 text-sm px-4 py-1.5 rounded-full bg-red-500/90 text-white hover:bg-red-500 transition"
         >
-          Try again
+          Retry
         </button>
       )}
     </div>
