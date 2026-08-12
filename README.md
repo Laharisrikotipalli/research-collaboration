@@ -950,7 +950,7 @@ A short walkthrough demonstrates:
 9. Graph database architecture
 
 **Demo Video:**
-PASTE-YOUR-SCREEN-RECORDING-LINK-HERE
+https://drive.google.com/file/d/1DR0li0u8AmlzZvbuu6gc8KvXCFhRjPgL/view?usp=sharing
 
 ---
 
