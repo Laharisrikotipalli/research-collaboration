@@ -1,0 +1,35 @@
+version: "3.9"
+
+# Reads CognoDB credentials from a .env file in this same directory.
+# Copy .env.example to .env and fill in your real values before running.
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      COGNODB_URI: ${COGNODB_URI}
+      COGNODB_USERNAME: ${COGNODB_USERNAME:-cognodb}
+      COGNODB_PASSWORD: ${COGNODB_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  # Run once to load seed data: docker compose run --rm seed
+  seed:
+    build: ./backend
+    environment:
+      COGNODB_URI: ${COGNODB_URI}
+      COGNODB_USERNAME: ${COGNODB_USERNAME:-cognodb}
+      COGNODB_PASSWORD: ${COGNODB_PASSWORD}
+    command: ["python", "-m", "scripts.seed"]
+    profiles: ["tools"]

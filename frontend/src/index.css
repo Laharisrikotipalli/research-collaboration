@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #10142A;
+  color: #F3EFE4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-twinkle,
+  .animate-draw,
+  .animate-softPulse,
+  .animate-fadeUp {
+    animation: none !important;
+  }
+}
